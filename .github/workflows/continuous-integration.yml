@@ -1,0 +1,37 @@
+name: Continuous Integration
+description: Check if pull request can build, then checking if can pass the test
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**/.github/**'
+      - '**/.gitignore'
+      - '**/.npmignore'
+      - '**/LICENSE'
+      - '**/*.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run build
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v4
+      - run: npm install
+      - run: npm run build
+      - run: npm test --if-present

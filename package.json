@@ -1,0 +1,38 @@
+{
+  "name": "@libslm/binary",
+  "version": "1.0.0",
+  "homepage": "https://github.com/Hulle107/libslm-binary#readme",
+  "description": "Low-level binary data manipulation library with typed primitives and bitwise operations in TypeScript.",
+  "keywords": [
+    "binary",
+    "bitwise",
+    "low-level",
+    "binary-operations",
+    "typescript",
+    "bit-manipulation",
+    "bit",
+    "byte",
+    "nibble",
+    "word",
+    "dword",
+    "experimental",
+    "libslm"
+  ],
+  "license": "MIT",
+  "author": "Delta Thiesen <delta.thiesen.1990@gmail.com>",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hulle107/libslm-binary.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hulle107/libslm-binary/issues"
+  }
+}
