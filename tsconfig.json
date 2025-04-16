@@ -12,6 +12,7 @@
         "strict": true,
         "skipLibCheck": false,
         "sourceMap": false,
+        "isolatedModules": true,
     },
     "include": ["src"]
 }
