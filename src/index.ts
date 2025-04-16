@@ -144,7 +144,7 @@ export class binary {
                 for ( 
                     let index: number = data.length - 1, mask: number = 1;
                     index >= 0;
-                    value += (data[index]? 1 : 0) & mask, mask <<= 1, index--
+                    value += data[index]? mask : 0, mask <<= 1, index--
                 );
             }
     
@@ -153,7 +153,7 @@ export class binary {
                 for ( 
                     let index: number = data.length - 1, mask: number = 1;
                     index >= 0;
-                    value += data[index] & mask, mask <<= 1, index--
+                    value += data[index] >= 1? mask : 0, mask <<= 1, index--
                 );
             }
     
@@ -162,7 +162,7 @@ export class binary {
                 for ( 
                     let index: number = data.length - 1, mask: number = 1;
                     index >= 0;
-                    value += data[index] & mask, mask <<= 1, index--
+                    value += +data[index] >= 1? mask : 0, mask <<= 1, index--
                 );
             }
     
@@ -712,12 +712,11 @@ export class binary {
             let start: number = char * 4;
             let end: number = start + 4;
     
-            if (end < stringified.length)
-                for (
-                    let index: number = start;
-                    index < end;
-                    number += stringified[index] == '1'? 1 : 0, index++
-                );
+            for ( 
+                let index: number = end - 1, mask: number = 1;
+                index >= start;
+                number += stringified[index] === '1'? mask : 0, mask <<= 1, index--
+            );
     
             switch (number) {
                 case 10: string += 'A'; break;
