@@ -4,8 +4,12 @@ node_modules/
 # Typescript
 tsconfig.json
 
-# Source directories
+# Source files
 src/
+
+# Test files
+tests/
+jest.config.js
 
 # Github
 .github/
