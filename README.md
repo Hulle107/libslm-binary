@@ -33,6 +33,8 @@ This library provides a set of primitive type classes for working with binary da
 - Added static function support for classes.
 - Refacted code to be more readable.
 - Changed 'unsigned()' and 'signed()' to be get functions.
+- Added testing.
+- Small performance boost, but need to finde a way to find the bottleneck better.
 
 ### Features
 

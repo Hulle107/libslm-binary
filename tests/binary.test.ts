@@ -95,25 +95,14 @@ test(`UNSIGNED`, () => {
     expect(b.unsigned).toBe(218);
 });
 
-test(`CREATE number PERFORMANCE(100_000) <= 200ms`, () => {
-    const start = performance.now();
+test(`PERFORMANCE(1_000_000) <= 1800ms`, () => {
+    const array: ('1' | '0')[] = ['1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0', '1', '0'];
+    let start: number = performance.now();
 
-    for (let i = 0; i < 100_000; i++) {
-        let create = new binary(32, 0xAAAAAAAA, true);
+    for (let i = 0; i < 1_000_000; i++) {
+        let create: binary = new binary(32, array, true);
     }
 
-    const end = performance.now();
-    expect(end - start).toBeLessThanOrEqual(200);
-});
-
-test(`CREATE boolean[] PERFORMANCE(100_000) <= 200ms`, () => {
-    const array = new binary(32, 0xAAAAAAAA, true).toArray();
-    const start = performance.now();
-
-    for (let i = 0; i < 100_000; i++) {
-        let create = new binary(32, array, true);
-    }
-
-    const end = performance.now();
-    expect(end - start).toBeLessThanOrEqual(200);
+    let end: number = performance.now();
+    expect(end - start).toBeLessThanOrEqual(1800);
 });

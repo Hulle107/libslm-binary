@@ -1,5 +1,3 @@
-
-
 /**
  * Represents a **binary** *number* with *bit*-level operations and configurable *signedness*.
  * @note Supports arithmetic, logical, and comparison operations on fixed-size **binary**.
@@ -97,11 +95,11 @@ export class binary {
         this.decimalMask = this.mask >> 1;
         this.signedMask = this.mask & this.decimalMask;
 
-        for ( let index: number = this.length - 1; index >= 0; index-- ) {
+        for (let index: number = this.length - 1; index >= 0; index--) {
             this[index] = false;
         }
 
-        const value = this.convert(argument);
+        let value = this.convert(argument);
 
         this.reform(value);
     }
@@ -130,7 +128,7 @@ export class binary {
         if (typeof data === 'boolean') return data? 1 : 0;
         if (typeof data === 'string') {
             if (data.length === 0) throw new Error(`binary.convert: Does not support, convertion of empty string, to a binary.`);
-            if (isNaN(+data)) throw new Error(`binary.convert: Does not support, convertion of non-numeric string, to a binary.`);
+            if (!+data) throw new Error(`binary.convert: Does not support, convertion of non-numeric string, to a binary.`);
     
             return +data;
         }
@@ -156,8 +154,8 @@ export class binary {
                     value += data[index] >= 1? mask : 0, mask <<= 1, index--
                 );
             }
-    
-            if (data.every((value) => typeof value === 'string' && !isNaN(+value))) {
+            
+            if (data.every((value) => typeof value === 'string') && data.every((value) => +value === 1 || +value === 0)) {
                 found = true;
                 for ( 
                     let index: number = data.length - 1, mask: number = 1;
@@ -184,11 +182,10 @@ export class binary {
     static and<T extends binary>(target: T, value: boolean[]): T;
     static and<T extends binary>(target: T, value: (1 | 0)[]): T;
     static and<T extends binary>(target: T, value: ('1' | '0')): T;
-    static and<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static and<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() & value.valueOf();
 
         target.reform(number);
@@ -202,11 +199,10 @@ export class binary {
     static or<T extends binary>(target: T, value: boolean[]): T;
     static or<T extends binary>(target: T, value: (1 | 0)[]): T;
     static or<T extends binary>(target: T, value: ('1' | '0')[]): T;
-    static or<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static or<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() | value.valueOf();
 
         target.reform(number);
@@ -220,11 +216,10 @@ export class binary {
     static xor<T extends binary>(target: T, value: boolean[]): T;
     static xor<T extends binary>(target: T, value: (1 | 0)[]): T;
     static xor<T extends binary>(target: T, value: ('1' | '0')[]): T;
-    static xor<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static xor<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() ^ value.valueOf();
 
         target.reform(number);
@@ -245,11 +240,10 @@ export class binary {
     static leftShift<T extends binary>(target: T, value: boolean[]): T;
     static leftShift<T extends binary>(target: T, value: (1 | 0)[]): T;
     static leftShift<T extends binary>(target: T, value: ('1' | '0')[]): T;
-    static leftShift<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static leftShift<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() << value.valueOf();
 
         target.reform(number);
@@ -263,11 +257,10 @@ export class binary {
     static rightShift<T extends binary>(target: T, value: boolean[]): T;
     static rightShift<T extends binary>(target: T, value: (1 | 0)[]): T;
     static rightShift<T extends binary>(target: T, value: ('1' | '0')[]): T;
-    static rightShift<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static rightShift<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() >> value.valueOf();
 
         target.reform(number);
@@ -359,11 +352,10 @@ export class binary {
     static add<T extends binary>(target: T, value: boolean[]): T;
     static add<T extends binary>(target: T, value: (1 | 0)[]): T;
     static add<T extends binary>(target: T, value: ('1' | '0')[]): T;
-    static add<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static add<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() + value.valueOf();
 
         target.reform(number);
@@ -377,11 +369,10 @@ export class binary {
     static subtract<T extends binary>(target: T, value: boolean[]): T;
     static subtract<T extends binary>(target: T, value: (1 | 0)[]): T;
     static subtract<T extends binary>(target: T, value: ('1' | '0')[]): T;
-    static subtract<T extends binary>(): T {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static subtract<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
         let number = target.valueOf() - value.valueOf();
 
         target.reform(number);
@@ -431,11 +422,10 @@ export class binary {
     static equal<T extends binary>(target: T, value: boolean[]): boolean;
     static equal<T extends binary>(target: T, value: (1 | 0)[]): boolean;
     static equal<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
-    static equal<T extends binary>(): boolean {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static equal<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
         return target.valueOf() === value.valueOf();
     }
@@ -447,11 +437,10 @@ export class binary {
     static notEqual<T extends binary>(target: T, value: boolean[]): boolean;
     static notEqual<T extends binary>(target: T, value: (1 | 0)[]): boolean;
     static notEqual<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
-    static notEqual<T extends binary>(): boolean {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static notEqual<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
         return target.valueOf() !== value.valueOf();
     }
@@ -463,11 +452,10 @@ export class binary {
     static greaterThen<T extends binary>(target: T, value: boolean[]): boolean;
     static greaterThen<T extends binary>(target: T, value: (1 | 0)[]): boolean;
     static greaterThen<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
-    static greaterThen<T extends binary>(): boolean {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static greaterThen<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
         return target.valueOf() > value.valueOf();
     }
@@ -479,11 +467,10 @@ export class binary {
     static lessThen<T extends binary>(target: T, value: boolean[]): boolean;
     static lessThen<T extends binary>(target: T, value: (1 | 0)[]): boolean;
     static lessThen<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
-    static lessThen<T extends binary>(): boolean {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static lessThen<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
         return target.valueOf() < value.valueOf();
     }
@@ -495,11 +482,10 @@ export class binary {
     static greaterThenOrEqual<T extends binary>(target: T, value: boolean[]): boolean;
     static greaterThenOrEqual<T extends binary>(target: T, value: (1 | 0)[]): boolean;
     static greaterThenOrEqual<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
-    static greaterThenOrEqual<T extends binary>(): boolean {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static greaterThenOrEqual<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
         return target.valueOf() >= value.valueOf();
     }
@@ -511,11 +497,10 @@ export class binary {
     static lessThenOrEqual<T extends binary>(target: T, value: boolean[]): boolean;
     static lessThenOrEqual<T extends binary>(target: T, value: (1 | 0)[]): boolean;
     static lessThenOrEqual<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
-    static lessThenOrEqual<T extends binary>(): boolean {
-        if (!(arguments[0] instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+    static lessThenOrEqual<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        const target = arguments[0] as T;
-        const value = new binary(target.length, arguments[1], target.useSigned);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
         return target.valueOf() <= value.valueOf();
     }
@@ -612,7 +597,7 @@ export class binary {
      * @note Pads with 0 if the **binary** is shorter then **this**.
      */
     fromBinary(binary: binary): this {
-        const value = this.convert(binary);
+        let value = this.convert(binary);
         this.reform(value);
         
         return this;
@@ -627,8 +612,7 @@ export class binary {
     fromArray(array: (1 | 0)[]): this;
     fromArray(array: ('1' | '0')[]): this;
     fromArray(): this {
-        const array = arguments[0];
-        const value = this.convert(array);
+        let value = this.convert(arguments[0]);
         this.reform(value);
 
         return this;
@@ -639,7 +623,7 @@ export class binary {
      * @note Only the last bit is used; all others are set to 0.
      */
     fromBoolean(boolean: boolean): this {
-        const value = this.convert(boolean);
+        let value = this.convert(boolean);
         this.reform(value);
 
         return this;
@@ -650,7 +634,7 @@ export class binary {
      * @note Handles both *unsigned* and *signed* values based on **this** *useSigned* flag.
      */
     fromNumber(number: number): this {
-        const value = this.convert(number);
+        let value = this.convert(number);
         this.reform(value);
 
         return this;
@@ -661,7 +645,7 @@ export class binary {
      * @note Handles both *unsigned* and *signed* values based on **this** *useSigned* flag.
      */
     fromString(string: string): this {
-        const value = this.convert(string);
+        let value = this.convert(string);
         this.reform(value);
 
         return this;
@@ -703,8 +687,8 @@ export class binary {
      * @param prefix Whether to include *0x* prefix on the output.
      */
     toHexadecimalString(prefix: boolean = false): string {
-        const stringified: string = this.toBinaryString(false);
-        const length: number = Math.ceil(stringified.length / 4);
+        let stringified: string = this.toBinaryString(false);
+        let length: number = Math.ceil(stringified.length / 4);
         let string: string = prefix? '0x' : '';
     
         for (let char: number = 0; char < length; char++) {
