@@ -1,37 +1,3 @@
-export interface NullError extends Error {}
-export interface UndefinedError extends Error {}
-export interface EmptyError extends Error {}
-export interface NaNError extends Error {}
-
-interface NullErrorConstructor extends TypeErrorConstructor {
-    new (message?: string): NullError;
-    (message?: string): NullError;
-    readonly prototype: NullError;
-}
-
-interface UndefinedErrorConstructor extends TypeErrorConstructor {
-    new (message?: string): UndefinedError;
-    (message?: string): UndefinedError;
-    readonly prototype: UndefinedError;
-}
-
-interface EmptyErrorConstructor extends RangeErrorConstructor {
-    new (message?: string): EmptyError;
-    (message?: string): EmptyError;
-    readonly prototype: EmptyError;
-}
-
-interface NaNErrorConstructor extends TypeErrorConstructor {
-    new (message?: string): NaNError;
-    (message?: string): NaNError;
-    readonly prototype: NaNError;
-}
-
-export declare var NullError: NullErrorConstructor;
-export declare var UndefinedError: UndefinedErrorConstructor;
-export declare var EmptyError: EmptyErrorConstructor;
-export declare var NaNError: NaNErrorConstructor;
-
 /**
  * Represents a **binary** *number* with *bit*-level operations and configurable *signedness*.
  * @note Supports arithmetic, logical, and comparison operations on fixed-size **binary**.
@@ -70,7 +36,33 @@ export class binary {
     /**
      * Returns the numerical value of **this** binary instance (*signed* or *unsigned*).
      */
-    get value(): number { return this.useSigned? this.signed() : this.unsigned() }
+    get value(): number { return this.useSigned? this.signed : this.unsigned }
+
+    /**
+     * Returns an *unsigned integer* representation of **this** binary instance.
+     */
+    get unsigned(): number {
+        let number: number = 0;
+    
+        for (
+            let index: number = this.length - 1, mask: number = 1;
+            index >= 0;
+            number += this[index]? mask : 0, mask <<= 1, index--
+        );
+    
+        return number;
+    }
+
+    /**
+     * Returns a *signed integer* representation of **this** binary instance.
+     */
+    get signed(): number {
+        let number: number = this.unsigned;
+
+        if (number & this.signedMask) number = -this.signedMask + (number & this.decimalMask);
+
+        return number;
+    }
 
     /**
      * Returns a *copy* of **this** binary instance.
@@ -94,8 +86,8 @@ export class binary {
     constructor(size: number) {
         let argument: unknown = arguments[1];
 
-        if (argument === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (argument === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
+        if (argument === null) throw new Error(`${this[Symbol.toStringTag]}: given value can't be null.`);
+        if (argument === undefined) throw new Error(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
         if (typeof arguments[2] === 'boolean') this.useSigned = arguments[2];
 
         this.length = size;
@@ -103,15 +95,176 @@ export class binary {
         this.decimalMask = this.mask >> 1;
         this.signedMask = this.mask & this.decimalMask;
 
-        for ( let index: number = this.length - 1; index >= 0; index-- ) {
+        for (let index: number = this.length - 1; index >= 0; index--) {
             this[index] = false;
         }
 
-        if (Array.isArray(argument)) this.fromArray(argument);
-        if (argument instanceof binary) this.fromBinary(argument);
-        if (typeof argument === 'number') this.fromNumber(argument);
-        if (typeof argument === 'boolean') this.fromBoolean(argument);
-        if (typeof argument === 'string') this.fromString(argument);
+        let value = this.convert(argument);
+
+        this.reform(value);
+    }
+
+    protected reform(value: number): this {
+        if (!this.useSigned) {
+            for ( let index: number = this.length - 1, mask: number = 1; index >= 0; mask <<= 1, index-- ) {
+                this[index] = value & mask? true : false;
+            }
+        } else {
+            for ( let index: number = this.length - 1, mask: number = 1; index >= 0; mask <<= 1, index-- ) {
+                this[index] = value & mask & this.decimalMask? true : false;
+            }
+            if (value < 0) this[0] = true;
+        }
+
+        return this;
+    }
+
+    protected convert(data: unknown): number {
+        if (data === null) throw new Error(`binary.convert: Does not support, convertion of value null, to a binary.`);
+        if (data === undefined) throw new Error(`binary.convert: Does not support, convertion of value undefined, to a binary.`);
+    
+        if (data instanceof binary) return data.valueOf();
+        if (typeof data === 'number') return data;
+        if (typeof data === 'boolean') return data? 1 : 0;
+        if (typeof data === 'string') {
+            if (data.length === 0) throw new Error(`binary.convert: Does not support, convertion of empty string, to a binary.`);
+            if (!+data) throw new Error(`binary.convert: Does not support, convertion of non-numeric string, to a binary.`);
+    
+            return +data;
+        }
+        if (Array.isArray(data)) {
+            if (data.length === 0) throw new Error(`binary.convert: Does not support, convertion of empty array, to a binary.`);
+            let found: boolean = false;
+            let value: number = 0;
+    
+            if (data.every((value) => typeof value === 'boolean')) {
+                found = true;
+                for ( 
+                    let index: number = data.length - 1, mask: number = 1;
+                    index >= 0;
+                    value += data[index]? mask : 0, mask <<= 1, index--
+                );
+            }
+    
+            if (data.every((value) => typeof value === 'number')) {
+                found = true;
+                for ( 
+                    let index: number = data.length - 1, mask: number = 1;
+                    index >= 0;
+                    value += data[index] >= 1? mask : 0, mask <<= 1, index--
+                );
+            }
+            
+            if (data.every((value) => typeof value === 'string') && data.every((value) => +value === 1 || +value === 0)) {
+                found = true;
+                for ( 
+                    let index: number = data.length - 1, mask: number = 1;
+                    index >= 0;
+                    value += +data[index] >= 1? mask : 0, mask <<= 1, index--
+                );
+            }
+    
+            if (!found) throw new Error(`binary.convert: Does not support, convertion of array content, to a binary.`);
+            return value;
+        }
+    
+        throw new Error(`binary.convert: Does not support, convertion of '${data}', to a binary.`);
+    }
+
+    // ****************************************
+    // *       Static Bitwise Operations      *
+    // ****************************************
+
+    static and<T extends binary>(target: T, value: binary): T;
+    static and<T extends binary>(target: T, value: number): T;
+    static and<T extends binary>(target: T, value: boolean): T;
+    static and<T extends binary>(target: T, value: string): T;
+    static and<T extends binary>(target: T, value: boolean[]): T;
+    static and<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static and<T extends binary>(target: T, value: ('1' | '0')): T;
+    static and<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() & value.valueOf();
+
+        target.reform(number);
+        return target;
+    }
+
+    static or<T extends binary>(target: T, value: binary): T;
+    static or<T extends binary>(target: T, value: number): T;
+    static or<T extends binary>(target: T, value: boolean): T;
+    static or<T extends binary>(target: T, value: string): T;
+    static or<T extends binary>(target: T, value: boolean[]): T;
+    static or<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static or<T extends binary>(target: T, value: ('1' | '0')[]): T;
+    static or<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() | value.valueOf();
+
+        target.reform(number);
+        return target;
+    }
+
+    static xor<T extends binary>(target: T, value: binary): T;
+    static xor<T extends binary>(target: T, value: number): T;
+    static xor<T extends binary>(target: T, value: boolean): T;
+    static xor<T extends binary>(target: T, value: string): T;
+    static xor<T extends binary>(target: T, value: boolean[]): T;
+    static xor<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static xor<T extends binary>(target: T, value: ('1' | '0')[]): T;
+    static xor<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() ^ value.valueOf();
+
+        target.reform(number);
+        return target;
+    }
+
+    static not<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        target.reform(~target.valueOf());
+        return target;
+    }
+
+    static leftShift<T extends binary>(target: T, value: binary): T;
+    static leftShift<T extends binary>(target: T, value: number): T;
+    static leftShift<T extends binary>(target: T, value: boolean): T;
+    static leftShift<T extends binary>(target: T, value: string): T;
+    static leftShift<T extends binary>(target: T, value: boolean[]): T;
+    static leftShift<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static leftShift<T extends binary>(target: T, value: ('1' | '0')[]): T;
+    static leftShift<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() << value.valueOf();
+
+        target.reform(number);
+        return target;
+    }
+
+    static rightShift<T extends binary>(target: T, value: binary): T;
+    static rightShift<T extends binary>(target: T, value: number): T;
+    static rightShift<T extends binary>(target: T, value: boolean): T;
+    static rightShift<T extends binary>(target: T, value: string): T;
+    static rightShift<T extends binary>(target: T, value: boolean[]): T;
+    static rightShift<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static rightShift<T extends binary>(target: T, value: ('1' | '0')[]): T;
+    static rightShift<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() >> value.valueOf();
+
+        target.reform(number);
+        return target;
     }
 
     // ****************************************
@@ -129,31 +282,7 @@ export class binary {
     and(value: boolean[]): this;
     and(value: (1 | 0)[]): this;
     and(value: ('1' | '0')[]): this;
-    and(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-
-        let number = this.unsigned();
-
-        if (value instanceof binary) number &= value.unsigned();
-        if (typeof value === 'number') number &= value;
-        if (typeof value === 'boolean') number &= value? 1 : 0;
-        if (typeof value === 'string') {
-            if (value.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: value can't be an empty string.`);
-            if (isNaN(+value)) throw new NaNError(`${this[Symbol.toStringTag]}: the value of '${value}' is not a numeric string.`);
-
-            number &= +value;
-        }
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            number &= other.unsigned();
-        }
-
-        this.fromNumber(number);
-        return this;
-    }
+    and(): this { return binary.and(this, arguments[0]) }
 
     /**
      * Bitwise OR performed on **this** binary instance with given value.
@@ -166,31 +295,7 @@ export class binary {
     or(value: boolean[]): this;
     or(value: (1 | 0)[]): this;
     or(value: ('1' | '0')[]): this;
-    or(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-
-        let number = this.unsigned();
-
-        if (value instanceof binary) number |= value.unsigned();
-        if (typeof value === 'number') number |= value;
-        if (typeof value === 'boolean') number |= value? 1 : 0;
-        if (typeof value === 'string') {
-            if (value.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: value can't be an empty string.`);
-            if (isNaN(+value)) throw new NaNError(`${this[Symbol.toStringTag]}: the value of '${value}' is not a numeric string.`);
-
-            number |= +value;
-        }
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            number |= other.unsigned();
-        }
-
-        this.fromNumber(number);
-        return this;
-    }
+    or(): this { return binary.or(this, arguments[0]) }
 
     /**
      * Bitwise XOR performed on **this** binary instance with given value.
@@ -203,92 +308,75 @@ export class binary {
     xor(value: boolean[]): this;
     xor(value: (1 | 0)[]): this;
     xor(value: ('1' | '0')[]): this;
-    xor(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-
-        let number = this.unsigned();
-
-        if (value instanceof binary) number ^= value.unsigned();
-        if (typeof value === 'number') number ^= value;
-        if (typeof value === 'boolean') number ^= value? 1 : 0;
-        if (typeof value === 'string') {
-            if (value.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: value can't be an empty string.`);
-            if (isNaN(+value)) throw new NaNError(`${this[Symbol.toStringTag]}: the value of '${value}' is not a numeric string.`);
-
-            number ^= +value;
-        }
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            number ^= other.unsigned();
-        }
-
-        this.fromNumber(number);
-        return this;
-    }
+    xor(): this { return binary.xor(this, arguments[0]) }
 
     /**
      * Bitwise NOT performed on **this** binary instance.
      */
-    not(): this {
-        let value = this.unsigned();
-        value = ~value;
-        this.fromNumber(value);
-        return this;
-    }
+    not(): this { return binary.not(this) }
 
     /**
      * Bitwise left shift performed on **this** binary instance by the given *number* of steps.
-     * @param steps Given *number* of steps in various forms (*number*, *string*, *boolean*).
+     * @param steps Given *number* of steps in various forms (*number*, *string*, *boolean*, **array**, or **binary**).
      */
-    leftShift(steps: number): this;
-    leftShift(steps: boolean): this;
-    leftShift(steps: string): this;
-    leftShift(): this {
-        const steps = arguments[0];
-        let value = this.unsigned();
-
-        if (steps === null) throw new NullError(`${this[Symbol.toStringTag]}: given steps can't be null.`);
-        if (steps === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given steps can't be undefined.`);
-        if (typeof steps === 'number') value <<= steps;
-        if (typeof steps === 'boolean') value <<= steps? 1 : 0;
-        if (typeof steps === 'string') {
-            if (steps.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: given steps can't be an empty string.`);
-            if (isNaN(+steps)) throw new NaNError(`${this[Symbol.toStringTag]}: given steps of '${steps}' is not a numeric string.`);
-
-            value <<= +steps;
-        }
-
-        this.fromNumber(value);
-        return this;
-    }
+    leftShift(value: binary): this;
+    leftShift(value: number): this;
+    leftShift(value: boolean): this;
+    leftShift(value: string): this;
+    leftShift(value: boolean[]): this;
+    leftShift(value: (1 | 0)[]): this;
+    leftShift(value: ('1' | '0')[]): this;
+    leftShift(): this { return binary.leftShift(this, arguments[0]) }
 
     /**
      * Bitwise right shift performed on **this** binary instance by the given *number* of steps.
-     * @param steps Given *number* of steps in various forms (*number*, *string*, *boolean*).
+     * @param steps Given *number* of steps in various forms (*number*, *string*, *boolean*, **array**, or **binary**).
      */
-    rightShift(steps: number): this;
-    rightShift(steps: boolean): this;
-    rightShift(steps: string): this;
-    rightShift(): this {
-        const steps = arguments[0];
-        let value = this.unsigned();
+    rightShift(value: binary): this;
+    rightShift(value: number): this;
+    rightShift(value: boolean): this;
+    rightShift(value: string): this;
+    rightShift(value: boolean[]): this;
+    rightShift(value: (1 | 0)[]): this;
+    rightShift(value: ('1' | '0')[]): this;
+    rightShift(): this { return binary.rightShift(this, arguments[0]) }
 
-        if (steps === null) throw new NullError(`${this[Symbol.toStringTag]}: given steps can't be null.`);
-        if (steps === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given steps can't be undefined.`);
-        if (typeof steps === 'number') value >>= steps;
-        if (typeof steps === 'boolean') value >>= steps? 1 : 0;
-        if (typeof steps === 'string') {
-            if (steps.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: given steps can't be an empty string.`);
-            if (isNaN(+steps)) throw new NaNError(`${this[Symbol.toStringTag]}: given steps of '${steps}' is not a numeric string.`);
+    // ****************************************
+    // *     Static Arithmetic Operations     *
+    // ****************************************
 
-            value >>= +steps;
-        }
+    static add<T extends binary>(target: T, value: binary): T;
+    static add<T extends binary>(target: T, value: number): T;
+    static add<T extends binary>(target: T, value: boolean): T;
+    static add<T extends binary>(target: T, value: string): T;
+    static add<T extends binary>(target: T, value: boolean[]): T;
+    static add<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static add<T extends binary>(target: T, value: ('1' | '0')[]): T;
+    static add<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        this.fromNumber(value);
-        return this;
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() + value.valueOf();
+
+        target.reform(number);
+        return target;
+    }
+
+    static subtract<T extends binary>(target: T, value: binary): T;
+    static subtract<T extends binary>(target: T, value: number): T;
+    static subtract<T extends binary>(target: T, value: boolean): T;
+    static subtract<T extends binary>(target: T, value: string): T;
+    static subtract<T extends binary>(target: T, value: boolean[]): T;
+    static subtract<T extends binary>(target: T, value: (1 | 0)[]): T;
+    static subtract<T extends binary>(target: T, value: ('1' | '0')[]): T;
+    static subtract<T extends binary>(target: T): T {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+        let number = target.valueOf() - value.valueOf();
+
+        target.reform(number);
+        return target;
     }
 
     // ****************************************
@@ -307,31 +395,7 @@ export class binary {
     add(value: boolean[]): this;
     add(value: (1 | 0)[]): this;
     add(value: ('1' | '0')[]): this;
-    add(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-
-        let number = this.useSigned? this.signed() : this.unsigned();
-
-        if (value instanceof binary) number += value.useSigned ? value.signed() : value.unsigned();
-        if (typeof value === 'number') number += value;
-        if (typeof value === 'boolean') number += value? 1 : 0;
-        if (typeof value === 'string') {
-            if (value.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: given value can't be an empty string.`);
-            if (isNaN(+value)) throw new NaNError(`${this[Symbol.toStringTag]}: given value of '${value}' is not a numeric string.`);
-
-            number += +value;
-        }
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            number += other.unsigned();
-        }
-
-        this.fromNumber(number);
-        return this;
-    }
+    add(): this { return binary.add(this, arguments[0]) }
 
     /**
      * Subtracts given value to **this** binary instance.
@@ -345,30 +409,100 @@ export class binary {
     subtract(value: boolean[]): this;
     subtract(value: (1 | 0)[]): this;
     subtract(value: ('1' | '0')[]): this;
-    subtract(): this {
-        const value = arguments[0];
+    subtract(): this { return binary.subtract(this, arguments[0]) }
 
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
+    // ****************************************
+    // *     Static Comparison Operations     *
+    // ****************************************
 
-        let number = this.useSigned? this.signed() : this.unsigned();
+    static equal<T extends binary>(target: T, value: binary): boolean;
+    static equal<T extends binary>(target: T, value: number): boolean;
+    static equal<T extends binary>(target: T, value: boolean): boolean;
+    static equal<T extends binary>(target: T, value: string): boolean;
+    static equal<T extends binary>(target: T, value: boolean[]): boolean;
+    static equal<T extends binary>(target: T, value: (1 | 0)[]): boolean;
+    static equal<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
+    static equal<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
 
-        if (value instanceof binary) number -= value.useSigned ? value.signed() : value.unsigned();
-        if (typeof value === 'number') number -= value;
-        if (typeof value === 'boolean') number -= value? 1 : 0;
-        if (typeof value === 'string') {
-            if (value.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: given value can't be an empty string.`);
-            if (isNaN(+value)) throw new NaNError(`${this[Symbol.toStringTag]}: given value of '${value}' is not a numeric string.`);
+        let value = new binary(target.length, arguments[1], target.useSigned);
 
-            number -= +value;
-        }
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            number -= other.unsigned();
-        }
+        return target.valueOf() === value.valueOf();
+    }
 
-        this.fromNumber(number);
-        return this;
+    static notEqual<T extends binary>(target: T, value: binary): boolean;
+    static notEqual<T extends binary>(target: T, value: number): boolean;
+    static notEqual<T extends binary>(target: T, value: boolean): boolean;
+    static notEqual<T extends binary>(target: T, value: string): boolean;
+    static notEqual<T extends binary>(target: T, value: boolean[]): boolean;
+    static notEqual<T extends binary>(target: T, value: (1 | 0)[]): boolean;
+    static notEqual<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
+    static notEqual<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+
+        return target.valueOf() !== value.valueOf();
+    }
+
+    static greaterThen<T extends binary>(target: T, value: binary): boolean;
+    static greaterThen<T extends binary>(target: T, value: number): boolean;
+    static greaterThen<T extends binary>(target: T, value: boolean): boolean;
+    static greaterThen<T extends binary>(target: T, value: string): boolean;
+    static greaterThen<T extends binary>(target: T, value: boolean[]): boolean;
+    static greaterThen<T extends binary>(target: T, value: (1 | 0)[]): boolean;
+    static greaterThen<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
+    static greaterThen<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+
+        return target.valueOf() > value.valueOf();
+    }
+
+    static lessThen<T extends binary>(target: T, value: binary): boolean;
+    static lessThen<T extends binary>(target: T, value: number): boolean;
+    static lessThen<T extends binary>(target: T, value: boolean): boolean;
+    static lessThen<T extends binary>(target: T, value: string): boolean;
+    static lessThen<T extends binary>(target: T, value: boolean[]): boolean;
+    static lessThen<T extends binary>(target: T, value: (1 | 0)[]): boolean;
+    static lessThen<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
+    static lessThen<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+
+        return target.valueOf() < value.valueOf();
+    }
+
+    static greaterThenOrEqual<T extends binary>(target: T, value: binary): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T, value: number): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T, value: boolean): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T, value: string): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T, value: boolean[]): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T, value: (1 | 0)[]): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
+    static greaterThenOrEqual<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+
+        return target.valueOf() >= value.valueOf();
+    }
+
+    static lessThenOrEqual<T extends binary>(target: T, value: binary): boolean;
+    static lessThenOrEqual<T extends binary>(target: T, value: number): boolean;
+    static lessThenOrEqual<T extends binary>(target: T, value: boolean): boolean;
+    static lessThenOrEqual<T extends binary>(target: T, value: string): boolean;
+    static lessThenOrEqual<T extends binary>(target: T, value: boolean[]): boolean;
+    static lessThenOrEqual<T extends binary>(target: T, value: (1 | 0)[]): boolean;
+    static lessThenOrEqual<T extends binary>(target: T, value: ('1' | '0')[]): boolean;
+    static lessThenOrEqual<T extends binary>(target: T): boolean {
+        if (!(target instanceof binary)) throw new Error(`binary.add: The target must be an instance of binary.`);
+
+        let value = new binary(target.length, arguments[1], target.useSigned);
+
+        return target.valueOf() <= value.valueOf();
     }
 
     // ****************************************
@@ -386,20 +520,7 @@ export class binary {
     equal(value: boolean[]): boolean;
     equal(value: (1 | 0)[]): boolean;
     equal(value: ('1' | '0')[]): boolean;
-    equal(): boolean {
-        const value = arguments[0];
-
-        if (value instanceof binary && this.unsigned() === value.unsigned()) return true;
-        if (typeof value === 'number' && this.valueOf() === value) return true; 
-        if (typeof value === 'boolean' && this.valueOf() === (value? 1 : 0)) return true; 
-        if (typeof value === 'string' && this.toString() === value) return true;
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            if (this.unsigned() === other.unsigned()) return true;
-        }
-
-        return false;
-    }
+    equal(): boolean { return binary.equal(this, arguments[0]) }
 
     /**
      * Checks if the given value is not equal to **this** binary instance.
@@ -412,20 +533,7 @@ export class binary {
     notEqual(value: boolean[]): boolean;
     notEqual(value: (1 | 0)[]): boolean;
     notEqual(value: ('1' | '0')[]): boolean;
-    notEqual(): boolean {
-        const value = arguments[0];
-
-        if (value instanceof binary && this.unsigned() !== value.unsigned()) return true;
-        if (typeof value === 'number' && this.valueOf() !== value) return true; 
-        if (typeof value === 'boolean' && this.valueOf() !== (value? 1 : 0)) return true; 
-        if (typeof value === 'string' && this.toString() !== value) return true;
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            if (this.unsigned() !== other.unsigned()) return true;
-        }
-
-        return false;
-    }
+    notEqual(): boolean { return binary.notEqual(this, arguments[0]) }
 
     /**
      * Checks if the given value is greater then **this** binary instance.
@@ -438,20 +546,7 @@ export class binary {
     greaterThen(value: boolean[]): boolean;
     greaterThen(value: (1 | 0)[]): boolean;
     greaterThen(value: ('1' | '0')[]): boolean;
-    greaterThen(): boolean {
-        const value = arguments[0];
-
-        if (value instanceof binary && this.unsigned() > value.unsigned()) return true;
-        if (typeof value === 'number' && this.valueOf() > value) return true; 
-        if (typeof value === 'boolean' && this.valueOf() > (value? 1 : 0)) return true; 
-        if (typeof value === 'string' && this.toString() > value) return true;
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            if (this.unsigned() > other.unsigned()) return true;
-        }
-
-        return false;
-    }
+    greaterThen(): boolean { return binary.greaterThen(this, arguments[0]) }
 
     /**
      * Checks if the given value is less then **this** binary instance.
@@ -464,20 +559,7 @@ export class binary {
     lessThen(value: boolean[]): boolean;
     lessThen(value: (1 | 0)[]): boolean;
     lessThen(value: ('1' | '0')[]): boolean;
-    lessThen(): boolean {
-        const value = arguments[0];
-
-        if (value instanceof binary && this.unsigned() < value.unsigned()) return true;
-        if (typeof value === 'number' && this.valueOf() < value) return true; 
-        if (typeof value === 'boolean' && this.valueOf() < (value? 1 : 0)) return true; 
-        if (typeof value === 'string' && this.toString() < value) return true;
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            if (this.unsigned() < other.unsigned()) return true;
-        }
-
-        return false;
-    }
+    lessThen(): boolean { return binary.lessThen(this, arguments[0]) }
 
     /**
      * Checks if the given value is greater then or equal to **this** binary instance.
@@ -490,20 +572,7 @@ export class binary {
     greaterThenOrEqual(value: boolean[]): boolean;
     greaterThenOrEqual(value: (1 | 0)[]): boolean;
     greaterThenOrEqual(value: ('1' | '0')[]): boolean;
-    greaterThenOrEqual(): boolean {
-        const value = arguments[0];
-
-        if (value instanceof binary && this.unsigned() >= value.unsigned()) return true;
-        if (typeof value === 'number' && this.valueOf() >= value) return true; 
-        if (typeof value === 'boolean' && this.valueOf() >= (value? 1 : 0)) return true; 
-        if (typeof value === 'string' && this.toString() >= value) return true;
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            if (this.unsigned() >= other.unsigned()) return true;
-        }
-
-        return false;
-    }
+    greaterThenOrEqual(): boolean { return binary.greaterThenOrEqual(this, arguments[0]) }
 
     /**
      * Checks if the given value is less then or equal to **this** binary instance.
@@ -516,20 +585,7 @@ export class binary {
     lessThenOrEqual(value: boolean[]): boolean;
     lessThenOrEqual(value: (1 | 0)[]): boolean;
     lessThenOrEqual(value: ('1' | '0')[]): boolean;
-    lessThenOrEqual(): boolean {
-        const value = arguments[0];
-
-        if (value instanceof binary && this.unsigned() <= value.unsigned()) return true;
-        if (typeof value === 'number' && this.valueOf() <= value) return true; 
-        if (typeof value === 'boolean' && this.valueOf() <= (value? 1 : 0)) return true; 
-        if (typeof value === 'string' && this.toString() <= value) return true;
-        if (Array.isArray(value)) {
-            let other = new binary(value.length, value);
-            if (this.unsigned() <= other.unsigned()) return true;
-        }
-
-        return false;
-    }
+    lessThenOrEqual(): boolean { return binary.lessThenOrEqual(this, arguments[0]) }
 
     // ****************************************
     // *    Conversion From Various Inputs    *
@@ -540,17 +596,9 @@ export class binary {
      * @note Truncates **binary** if it's longer then **this**.
      * @note Pads with 0 if the **binary** is shorter then **this**.
      */
-    fromBinary(binary: binary): this;
-    fromBinary(): this {
-        const argument = arguments[0];
-
-        if (argument === null) throw new NullError(`${this[Symbol.toStringTag]}: given binary can't be null.`);
-        if (argument === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given binary can't be undefined.`);
-        if (!(argument instanceof binary)) throw new TypeError(`${this[Symbol.toStringTag]}: given binary must be a binary instance.`);
-        
-        for ( let index: number = this.length - 1, mask: number = argument.length - 1; index >= 0; mask--, index-- ) {
-            this[index] = argument[mask];
-        }
+    fromBinary(binary: binary): this {
+        let value = this.convert(binary);
+        this.reform(value);
         
         return this;
     }
@@ -564,33 +612,8 @@ export class binary {
     fromArray(array: (1 | 0)[]): this;
     fromArray(array: ('1' | '0')[]): this;
     fromArray(): this {
-        const array = arguments[0];
-
-        if (array === null) throw new NullError(`${this[Symbol.toStringTag]}: given array can't be null.`);
-        if (array === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given array can't be undefined.`);
-        if (!Array.isArray(array)) throw new TypeError(`${this[Symbol.toStringTag]}: given array must be an array instance.`);
-        if (array.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: given array can't be empty.`);
-
-        if (array.every((data) => typeof data === 'boolean')) {
-            for ( let index: number = this.length - 1, mask: number = array.length - 1; index >= 0; mask--, index-- ) {
-                if (mask >= 0) this[index] = array[mask];
-                else this[index] = false;
-            }
-        }
-
-        if (array.every((data) => typeof data === 'number')) {
-            for ( let index: number = this.length - 1, mask: number = array.length - 1; index >= 0; mask--, index-- ) {
-                if (mask >= 0) this[index] = array[mask] > 0;
-                else this[index] = false;
-            }
-        }
-
-        if (array.every((data) => typeof data === 'string')) {
-            for ( let index: number = this.length - 1, mask: number = array.length - 1; index >= 0; mask--, index-- ) {
-                if (mask >= 0 && !isNaN(+array[mask])) this[index] = +array[mask] > 0;
-                else this[index] = false;
-            }
-        }
+        let value = this.convert(arguments[0]);
+        this.reform(value);
 
         return this;
     }
@@ -599,18 +622,9 @@ export class binary {
      * Converts a single *boolean* into **this** binary instance.
      * @note Only the last bit is used; all others are set to 0.
      */
-    fromBoolean(value: boolean): this;
-    fromBoolean(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-        if (typeof value !== 'boolean') throw new TypeError(`${this[Symbol.toStringTag]}: given value must be a boolean.`);
-
-        for ( let index: number = this.length - 1; index >= 0; index-- ) {
-            if (index === this.length - 1) this[index] = value;
-            else this[index] = false;
-        }
+    fromBoolean(boolean: boolean): this {
+        let value = this.convert(boolean);
+        this.reform(value);
 
         return this;
     }
@@ -619,24 +633,9 @@ export class binary {
      * Converts a *number* into **this** binary instance.
      * @note Handles both *unsigned* and *signed* values based on **this** *useSigned* flag.
      */
-    fromNumber(value: number): this;
-    fromNumber(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-        if (typeof value !== 'number') throw new TypeError(`${this[Symbol.toStringTag]}: given value must be a number.`);
-
-        if (!this.useSigned) {
-            for ( let index: number = this.length - 1, mask: number = 1; index >= 0; mask <<= 1, index-- ) {
-                this[index] = value & mask? true : false;
-            }
-        } else {
-            for ( let index: number = this.length - 1, mask: number = 1; index >= 0; mask <<= 1, index-- ) {
-                this[index] = value & mask & this.decimalMask? true : false;
-            }
-            if (value < 0) this[0] = true;
-        }
+    fromNumber(number: number): this {
+        let value = this.convert(number);
+        this.reform(value);
 
         return this;
     }
@@ -645,26 +644,9 @@ export class binary {
      * Converts a *numeric string* into **this** binary instance.
      * @note Handles both *unsigned* and *signed* values based on **this** *useSigned* flag.
      */
-    fromString(value: string): this;
-    fromString(): this {
-        const value = arguments[0];
-
-        if (value === null) throw new NullError(`${this[Symbol.toStringTag]}: given value can't be null.`);
-        if (value === undefined) throw new UndefinedError(`${this[Symbol.toStringTag]}: given value can't be undefined.`);
-        if (typeof value !== 'string') throw new TypeError(`${this[Symbol.toStringTag]}: given value must be a string.`);
-        if (value.length === 0) throw new EmptyError(`${this[Symbol.toStringTag]}: given value can't be an empty string.`);
-        if (isNaN(+value)) throw new NaNError(`${this[Symbol.toStringTag]}: given value of '${value}' is not a numeric string.`);
-
-        if (!this.useSigned) {
-            for ( let index: number = this.length - 1, mask: number = 1; index >= 0; mask <<= 1, index-- ) {
-                this[index] = +value & mask? true : false;
-            }
-        } else {
-            for ( let index: number = this.length - 1, mask: number = 1; index >= 0; mask <<= 1, index-- ) {
-                this[index] = +value & mask & this.decimalMask? true : false;
-            }
-            if (+value < 0) this[0] = true;
-        }
+    fromString(string: string): this {
+        let value = this.convert(string);
+        this.reform(value);
 
         return this;
     }
@@ -705,8 +687,8 @@ export class binary {
      * @param prefix Whether to include *0x* prefix on the output.
      */
     toHexadecimalString(prefix: boolean = false): string {
-        const stringified: string = this.toBinaryString(false);
-        const length: number = Math.ceil(stringified.length / 4);
+        let stringified: string = this.toBinaryString(false);
+        let length: number = Math.ceil(stringified.length / 4);
         let string: string = prefix? '0x' : '';
     
         for (let char: number = 0; char < length; char++) {
@@ -714,12 +696,11 @@ export class binary {
             let start: number = char * 4;
             let end: number = start + 4;
     
-            if (end < stringified.length)
-                for (
-                    let index: number = start;
-                    index < end;
-                    number += stringified[index] == '1'? 1 : 0, index++
-                );
+            for ( 
+                let index: number = end - 1, mask: number = 1;
+                index >= start;
+                number += stringified[index] === '1'? mask : 0, mask <<= 1, index--
+            );
     
             switch (number) {
                 case 10: string += 'A'; break;
@@ -736,35 +717,9 @@ export class binary {
     }
 
     /**
-     * Returns an *unsigned integer* representation of **this** binary instance.
-     */
-    unsigned(): number {
-        let number: number = 0;
-    
-        for (
-            let index: number = this.length - 1, mask: number = 1;
-            index >= 0;
-            number += this[index]? mask : 0, mask <<= 1, index--
-        );
-    
-        return number;
-    }
-
-    /**
-     * Returns a *signed integer* representation of **this** binary instance.
-     */
-    signed(): number {
-        let number: number = this.unsigned();
-
-        if (number & this.signedMask) number = -this.signedMask + (number & this.decimalMask);
-
-        return number;
-    }
-
-    /**
      * Used for automatic conversion to primitive *number*.
      */
-    valueOf(): number { return this.useSigned? this.signed() : this.unsigned() }
+    valueOf(): number { return this.useSigned? this.signed : this.unsigned }
 
     /**
      * Used for automatic conversion to primitive *string*.
