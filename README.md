@@ -7,16 +7,16 @@
 
 - [Libslm (Life is boring so let's make) Binary](#libslm-life-is-boring-so-lets-make-binary)
   - [📚 Indexing](#-indexing)
-  - [🧪 Introduction](#-introduction)
-  - [🧩 Binary](#-binary)
+  - [📢 Introduction](#-introduction)
+  - [💾 Binary](#-binary)
     - [🔄 Changes v1.0.7](#-changes-v107)
     - [✨ Features](#-features)
-    - [🧱 Primitive Types](#-primitive-types)
+    - [🧩 Primitive Types](#-primitive-types)
     - [💡 Usage Example](#-usage-example)
     - [🛣️ Roadmap](#️-roadmap)
     - [📝 Notes](#-notes)
 
-## 🧪 Introduction
+## 📢 Introduction
 
 Welcome to **Libslm Binary** — a chaotic collection of experiments, half-baked ideas, and bursts of inspiration.
 This isn't a polished, production-ready framework. It's a playground for concepts that may or may not evolve into something meaningful.
@@ -27,7 +27,7 @@ But if you're here out of **curiosity, exploration, or sheer madness** — welco
 
 > ⚠️ Use at your own risk. Enjoy the ride.
 
-## 🧩 Binary
+## 💾 Binary
 
 This library provides low-level, primitive types for working with binary data. These are designed for **precise bit and byte manipulation**, with a focus on fixed-width representations.
 
@@ -44,7 +44,7 @@ This library provides low-level, primitive types for working with binary data. T
 - **Arithmetic & Bitwise Operations** – Perform operations while maintaining binary structure.
 - **Signed Value Conversion** – Supports two’s complement interpretation.
 
-### 🧱 Primitive Types
+### 🧩 Primitive Types
 
 - **bit** – A single binary digit (0 or 1).
 - **nibble** – A 4-bit unsigned integer.
