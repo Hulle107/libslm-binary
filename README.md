@@ -3,92 +3,91 @@
 ![Version](https://img.shields.io/github/package-json/v/Hulle107/libslm-binary?style=for-the-badge)
 ![License](https://img.shields.io/github/license/Hulle107/libslm-binary?style=for-the-badge)
 
-## Indexing
+## 📚 Indexing
 
 - [Libslm (Life is boring so let's make) Binary](#libslm-life-is-boring-so-lets-make-binary)
-  - [Indexing](#indexing)
-  - [Introduction](#introduction)
-  - [Binary](#binary)
-    - [Changes v1.0.6](#changes-v106)
-    - [Features](#features)
-    - [Primitive Types](#primitive-types)
-    - [Usage Example](#usage-example)
-    - [Roadmap](#roadmap)
-    - [Notes](#notes)
+  - [📚 Indexing](#-indexing)
+  - [🧪 Introduction](#-introduction)
+  - [🧩 Binary](#-binary)
+    - [🔄 Changes v1.0.7](#-changes-v107)
+    - [✨ Features](#-features)
+    - [🧱 Primitive Types](#-primitive-types)
+    - [💡 Usage Example](#-usage-example)
+    - [🛣️ Roadmap](#️-roadmap)
+    - [📝 Notes](#-notes)
 
-## Introduction
+## 🧪 Introduction
 
-Welcome to this library—a chaotic collection of experiments, half-baked ideas, and random bursts of inspiration. This is not a polished, production-ready framework but rather a playground for concepts that may or may not evolve into something useful.
+Welcome to **Libslm Binary** — a chaotic collection of experiments, half-baked ideas, and bursts of inspiration.
+This isn't a polished, production-ready framework. It's a playground for concepts that may or may not evolve into something meaningful.
 
-Because of its experimental nature, stability is not guaranteed. Features may change, disappear, or break without warning. If you're looking for a dependable tool, you might want to look elsewhere. But if you're here for curiosity, exploration, or sheer madness, welcome aboard!
+Due to its experimental nature, **stability is not guaranteed**. Features may change, vanish, or break at any time.
+If you're here for reliability, you might want to look elsewhere.
+But if you're here out of **curiosity, exploration, or sheer madness** — welcome aboard.
 
-Use at your own risk, and enjoy the ride.
+> ⚠️ Use at your own risk. Enjoy the ride.
 
-## Binary
+## 🧩 Binary
 
-This library provides a set of primitive type classes for working with binary data at a low level. These classes are designed to represent fundamental binary structures, allowing for precise manipulation of bits and bytes.
+This library provides low-level, primitive types for working with binary data. These are designed for **precise bit and byte manipulation**, with a focus on fixed-width representations.
 
-### Changes v1.0.6
+> ℹ️ The core challenge in this library is that all binary values are, fundamentally, just numbers. So after performing arithmetic or bitwise operations, values tend to default back to raw numbers, losing their typed wrapper.
 
-- Added static function support for classes.
-- Refacted code to be more readable.
-- Changed 'unsigned()' and 'signed()' to be get functions.
-- Added testing.
-- Small performance boost, but need to finde a way to find the bottleneck better.
+### 🔄 Changes v1.0.7
 
-### Features
+- Removed the use of classes.
+- Removed `dword` support (for now) due to the complexity of enforcing size constraints.
 
-- **Encapsulation of Binary Data** – Represent numbers as fixed-width bit sequences.
-- **Basic Arithmetic & Bitwise Operations** – Perform operations while maintaining binary integrity.
-- **Signed value convertion** – Get values in a *Two's complement* format.
-- **Command chaining** – Operations can be chained together.
+### ✨ Features
 
-### Primitive Types
+- **Binary Encapsulation** –Represent numbers as fixed-width binary sequences.
+- **Arithmetic & Bitwise Operations** – Perform operations while maintaining binary structure.
+- **Signed Value Conversion** – Supports two’s complement interpretation.
 
-- **binary** – A general size of bits (used to define own sizes).
+### 🧱 Primitive Types
+
 - **bit** – A single binary digit (0 or 1).
-- **nibble** – A 4-bit integer.
-- **byte** – A 8-bit integer.
-- **word** – A 16-bit integer.
-- **dword** – A 32-bit integer.
+- **nibble** – A 4-bit unsigned integer.
+- **byte** – A 8-bit unsigned integer.
+- **word** – A 16-bit unsigned integer.
 
-### Usage Example
+### 💡 Usage Example
 
 ```typescript
-import {byte} from 'libslm-binary';
+import {byte, byteArray} from 'libslm-binary';
 
-let first: byte = new byte(65);
-console.info(first.toString() + 1); // 651
-console.info(first.valueOf() + 1);  // 66
-console.info(first.length);         // 8
-console.info(first[1]);             // 1 <───┐
-                                    //   [0, 1, 0, 0, 0, 0, 0, 1]
+let first: byte = byte(0x41);
+console.info(byte.toArray(first));        // [0, 1, 0, 0, 0, 0, 0, 1]
+console.info(byte.toString(first));       // 1000001
+console.info(byte.toBinary(first));       // 01000001
+console.info(byte.toHexadecimal(first));  // 41
+console.info(byte.size);                  // 8
+console.info(byte.mask);                  // 255
 
-let second: byte = new byte(255);
-second.add(1);
-second.subtract(1);
+let second: byte = byte(255);
+console.info(byte.toSigned(second));      // -127
+console.info(byte.valueOf(second));       // 255
 
-let third: number = second.signed;
-
-console.info(first.toBinaryString(true));       // 0b01000001
-console.info(second.toHexadecimalString(true)); // 0xFF
-console.info(third);                            // -1
+let array: byteArray = [1, 0, 0, 1, 1, 0, 0, 0];
+let third: byte = byte.fromArray(array);
+console.info(third);                      // 152
 ```
 
-### Roadmap
+### 🛣️ Roadmap
 
-- ✅ – Basic implementation of classes.
-- ✅ – Basic arithmetic & bitwise operations.
-- ✅ – Basic documentation.
-- ✅ – Basic error messages and handling.
-- ✅ – Convertion between *number* and classes.
-- ✅ – Convertion between *string* and classes.
-- ✅ – Convertion between *array* and classes.
-- ✅ – Convertion to binary or hexdecimal *string*.
-- ✅ – Support for signed values.
-- 🔲 – Advance documentation.
-- 🔲 – Improve performance.
+| Status | Feature |
+|:------:|:--------|
+| ✅ | Basic implementation |
+| ✅ | Basic arithmetic & bitwise operations |
+| ✅ | Basic documentation |
+| ✅ | Conversion between arrays and types |
+| ✅ | Conversion to binary/hex strings |
+| ✅ | Signed value support |
+| ✅ | Performance improvements |
+| 🔲 | Advanced documentation |
+| 🔲 | Floating-point support |
 
-### Notes
+### 📝 Notes
 
-These classes serve as fundamental building blocks for binary manipulation. Since this library is experimental, implementations may change as new ideas emerge.
+These types serve as **foundational tools** for binary manipulation.
+Given the library's experimental status, expect things to **evolve** — or get scrapped entirely.
