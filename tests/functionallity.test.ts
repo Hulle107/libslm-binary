@@ -1,0 +1,137 @@
+import {bit, nibble, byte, word} from '../src/index';
+
+describe('TEST bit', () => {
+    const zero          = bit(0x0);
+    const max           = bit(0x1);
+    const half          = bit(0x0);
+    const overflow0     = bit(0xFFFFFFFE);
+    const overflow1     = bit(0xFFFFFFFF);
+    const toArray       = bit.toArray(max);
+    const toBinary      = bit.toBinary(half);
+    const toHexadecimal = bit.toHexadecimal(half);
+    const toString      = bit.toString(half);
+    const toSigned      = bit.toSigned(max);
+    const valueOf       = bit.valueOf(max);
+    const fromArray     = bit.fromArray([1]);
+    const get0          = bit.get(half, 0);
+    const get1          = bit.get(max, 0);
+    const set           = bit.set(zero, 0, true);
+
+    test('CREATE zero',       () => expect(zero)         .toBe(0));
+    test('CREATE max',        () => expect(max)          .toBe(1));
+    test('CREATE half',       () => expect(half)         .toBe(0));
+    test('CREATE overflow 1', () => expect(overflow0)    .toBe(0));
+    test('CREATE overflow 2', () => expect(overflow1)    .toBe(1));
+    test('toArray',           () => expect(toArray)      .toStrictEqual([1]));
+    test('toBinary',          () => expect(toBinary)     .toBe('0'));
+    test('toHexadecimal',     () => expect(toHexadecimal).toBe('0'));
+    test('toString',          () => expect(toString)     .toBe('0'));
+    test('toSigned',          () => expect(toSigned)     .toBe(-0));
+    test('valueOf',           () => expect(valueOf)      .toBe(1));
+    test('fromArray',         () => expect(fromArray)    .toBe(1));
+    test('get 1',             () => expect(get0)         .toBe(false));
+    test('get 2',             () => expect(get1)         .toBe(true));
+    test('set',               () => expect(set)          .toBe(1));
+});
+
+describe('TEST nibble', () => {
+    const zero          = nibble(0x0);
+    const max           = nibble(0xF);
+    const half          = nibble(0x7);
+    const overflow0     = nibble(0xFFFFFFFE);
+    const overflow1     = nibble(0xFFFFFFFF);
+    const toArray       = nibble.toArray(max);
+    const toBinary      = nibble.toBinary(half);
+    const toHexadecimal = nibble.toHexadecimal(half);
+    const toString      = nibble.toString(half);
+    const toSigned      = nibble.toSigned(max);
+    const valueOf       = nibble.valueOf(max);
+    const fromArray     = nibble.fromArray([1,1,1,1]);
+    const get0          = nibble.get(half, 3);
+    const get1          = nibble.get(half, 0);
+    const set           = nibble.set(zero, 3, true);
+
+    test('CREATE zero',       () => expect(zero)         .toBe(0));
+    test('CREATE max',        () => expect(max)          .toBe(15));
+    test('CREATE half',       () => expect(half)         .toBe(7));
+    test('CREATE overflow 1', () => expect(overflow0)    .toBe(14));
+    test('CREATE overflow 2', () => expect(overflow1)    .toBe(15));
+    test('toArray',           () => expect(toArray)      .toStrictEqual([1,1,1,1]));
+    test('toBinary',          () => expect(toBinary)     .toBe('0111'));
+    test('toHexadecimal',     () => expect(toHexadecimal).toBe('7'));
+    test('toString',          () => expect(toString)     .toBe('111'));
+    test('toSigned',          () => expect(toSigned)     .toBe(-7));
+    test('valueOf',           () => expect(valueOf)      .toBe(15));
+    test('fromArray',         () => expect(fromArray)    .toBe(15));
+    test('get 1',             () => expect(get0)         .toBe(false));
+    test('get 2',             () => expect(get1)         .toBe(true));
+    test('set',               () => expect(set)          .toBe(8));
+});
+
+describe('TEST byte', () => {
+    const zero          = byte(0x00);
+    const max           = byte(0xFF);
+    const half          = byte(0x7F);
+    const overflow0     = byte(0xFFFFFFFE);
+    const overflow1     = byte(0xFFFFFFFF);
+    const toArray       = byte.toArray(max);
+    const toBinary      = byte.toBinary(half);
+    const toHexadecimal = byte.toHexadecimal(half);
+    const toString      = byte.toString(half);
+    const toSigned      = byte.toSigned(max);
+    const valueOf       = byte.valueOf(max);
+    const fromArray     = byte.fromArray([1,1,1,1,1,1,1,1]);
+    const get0          = byte.get(half, 7);
+    const get1          = byte.get(half, 0);
+    const set           = byte.set(zero, 7, true);
+
+    test('CREATE zero',       () => expect(zero)         .toBe(0));
+    test('CREATE max',        () => expect(max)          .toBe(255));
+    test('CREATE half',       () => expect(half)         .toBe(127));
+    test('CREATE overflow 1', () => expect(overflow0)    .toBe(254));
+    test('CREATE overflow 2', () => expect(overflow1)    .toBe(255));
+    test('toArray',           () => expect(toArray)      .toStrictEqual([1,1,1,1,1,1,1,1]));
+    test('toBinary',          () => expect(toBinary)     .toBe('01111111'));
+    test('toHexadecimal',     () => expect(toHexadecimal).toBe('7F'));
+    test('toString',          () => expect(toString)     .toBe('1111111'));
+    test('toSigned',          () => expect(toSigned)     .toBe(-127));
+    test('valueOf',           () => expect(valueOf)      .toBe(255));
+    test('fromArray',         () => expect(fromArray)    .toBe(255));
+    test('get 1',             () => expect(get0)         .toBe(false));
+    test('get 2',             () => expect(get1)         .toBe(true));
+    test('set',               () => expect(set)          .toBe(128));
+});
+
+describe('TEST word', () => {
+    const zero          = word(0x0000);
+    const max           = word(0xFFFF);
+    const half          = word(0x7FFF);
+    const overflow0     = word(0xFFFFFFFE);
+    const overflow1     = word(0xFFFFFFFF);
+    const toArray       = word.toArray(max);
+    const toBinary      = word.toBinary(half);
+    const toHexadecimal = word.toHexadecimal(half);
+    const toString      = word.toString(half);
+    const toSigned      = word.toSigned(max);
+    const valueOf       = word.valueOf(max);
+    const fromArray     = word.fromArray([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
+    const get0          = word.get(half, 15);
+    const get1          = word.get(half, 0);
+    const set           = word.set(zero, 15, true);
+
+    test('CREATE zero',       () => expect(zero)         .toBe(0));
+    test('CREATE max',        () => expect(max)          .toBe(65535));
+    test('CREATE half',       () => expect(half)         .toBe(32767));
+    test('CREATE overflow 1', () => expect(overflow0)    .toBe(65534));
+    test('CREATE overflow 2', () => expect(overflow1)    .toBe(65535));
+    test('toArray',           () => expect(toArray)      .toStrictEqual([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]));
+    test('toBinary',          () => expect(toBinary)     .toBe('0111111111111111'));
+    test('toHexadecimal',     () => expect(toHexadecimal).toBe('7FFF'));
+    test('toString',          () => expect(toString)     .toBe('111111111111111'));
+    test('toSigned',          () => expect(toSigned)     .toBe(-32767));
+    test('valueOf',           () => expect(valueOf)      .toBe(65535));
+    test('fromArray',         () => expect(fromArray)    .toBe(65535));
+    test('get 1',             () => expect(get0)         .toBe(false));
+    test('get 2',             () => expect(get1)         .toBe(true));
+    test('set',               () => expect(set)          .toBe(32768));
+});
